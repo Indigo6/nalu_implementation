@@ -59,7 +59,7 @@ def nac_complex_single_layer(x_in, out_units, epsilon = 0.000001):
     # Express Input feature in log space to learn complex functions
     x_modified = tf.log(tf.abs(x_in) + epsilon)
 
-    m = tf.exp( tf.matmul(x_modified, W) )
+    m = tf.exp( tf.matmul(x_modified, W))
 
     return m, W
 
@@ -98,89 +98,71 @@ def nalu(x_in, out_units, epsilon=0.000001, get_weights=False):
         return y_out, G, W_simple, W_complex
     else:
         return y_out
+if __name__ == "__main__":
+    x1 = np.random.randint(0,100001, size=20000).astype(np.float32)
+    x2 = np.random.randint(1,100001, size=20000).astype(np.float32)
+    y_train = x1/x2
+    x_train = np.column_stack((x1,x2))
 
+    print(x_train.shape)
+    print(y_train.shape)
 
-# Test the Network by learning the adition
+    x1 = np.random.randint(1000000, 100000000, size=256).astype(np.float32)
+    x2 = np.random.randint(1000000, 100000000, size=256).astype(np.float32)
 
-# Generate a series of input number X1,X2 and X3 for training
-x1 =  np.arange(1000,11000, step=5, dtype= np.float32)
-x2 =  np.arange(500, 6500 , step=3, dtype= np.float32)
-x3 = np.arange(0, 2000, step = 1, dtype= np.float32)
-
-
-# Make any function of x1,x2 and x3 to try the network on
-y_train = (x1/4) + (x2/2) + x3**2
-#y_train = x1 + x2 + x3
-
-x_train = np.column_stack( (x1,x2,x3) )
-
-print(x_train.shape)
-print(y_train.shape)
-
-# Generate a series of input number X1,X2 and X3 for testing
-x1 =  np.random.randint(0, 1000, size=200).astype(np.float32)
-x2 = np.random.randint(1, 1000, size=200).astype(np.float32)
-
-x_test = np.column_stack((x1,x2,x3))
-
-y_test = x1/x2
-
-#y_test = x1/x2
-
-print()
-print(x_test.shape)
-print(y_test.shape)
-
-
-# Define the placeholder to feed the value at run time
-X = tf.placeholder(dtype=tf.float32, shape =[None , 2])    # Number of samples x Number of features (number of inputs to be added)
-Y = tf.placeholder(dtype=tf.float32, shape=[None,])
-
-# define the network
-# Here the network contains only one NAC cell (for testing)
-y_pred  = nalu(X, out_units=1)
-y_pred = tf.squeeze(y_pred)             # Remove extra dimensions if any
-
-# Mean Square Error (MSE)
-loss = tf.reduce_mean( (y_pred - Y) **2)
-#loss= tf.losses.mean_squared_error(labels=y_train, predictions=y_pred)
-
-
-
-# training parameters
-alpha = 0.005 # learning rate
-epochs = 30000
-
-
-optimize = tf.train.AdamOptimizer(learning_rate=alpha).minimize(loss)
-
-with tf.Session() as sess:
-
-    sess.run(tf.global_variables_initializer())
-
-    # pre training evaluate
-    print("Pre training MSE: ", sess.run (loss, feed_dict={X: x_test, Y:y_test}))
-    print()
-    cost_history = []
-
-    for i in range(epochs):
-        _, cost = sess.run([optimize, loss], feed_dict={X: x_train, Y: y_train})
-        print("epoch: {}, MSE: {}".format(i, cost))
-        cost_history.append(cost)
-
-    # plot the MSE over each iteration
-    plt.plot(np.arange(epochs),np.log(cost_history))  # Plot MSE on log scale
-    plt.xlabel("Epoch")
-    plt.ylabel("MSE")
-    plt.show()
+    x_test = np.column_stack((x1,x2))
+    y_test = x1/x2
 
     print()
-    #print(W.eval())
-    #print()
-    # post training loss
-    print("Post training MSE: ", sess.run(loss, feed_dict={X: x_test, Y: y_test}))
+    print(x_test.shape)
+    print(y_test.shape)
 
-    print("Actual sum: ", y_test[0:10])
-    print()
-    y_hat = sess.run(y_pred, feed_dict={X: x_test, Y: y_test})
-    print("Predicted sum: ", y_hat[0:10] )
+
+    # Define the placeholder to feed the value at run time
+    X = tf.placeholder(dtype=tf.float32, shape =[None,2])    # Number of samples x Number of features (number of inputs to be added)
+    Y = tf.placeholder(dtype=tf.float32, shape=[None,])
+
+    # define the network
+    # Here the network contains only one NAC cell (for testing)
+    y_pred_nalu  = nalu(X, out_units=1)
+    y_pred_nalu = tf.squeeze(y_pred_nalu)             # Remove extra dimensions if any
+
+    # Mean Square Error (MSE)
+    loss_nalu = tf.reduce_mean( (y_pred_nalu - Y) **2)
+    #loss= tf.losses.mean_squared_error(labels=y_train, predictions=y_pred)
+
+    # training parameters
+    alpha = 0.005 # learning rate
+    epochs = 10000
+    optimize = tf.train.AdamOptimizer(learning_rate=alpha).minimize(loss_nalu)
+
+    with tf.Session() as sess:
+
+        sess.run(tf.global_variables_initializer())
+
+        # pre training evaluate
+        print("Pre training MSE: ", sess.run (loss_nalu, feed_dict={X: x_test, Y:y_test}))
+        print()
+        cost_history = []
+
+        for i in range(epochs):
+            _, cost = sess.run([optimize, loss_nalu], feed_dict={X: x_train, Y: y_train})
+            print("epoch: {}, MSE: {}".format(i, cost))
+            cost_history.append(cost)
+
+        # plot the MSE over each iteration
+        plt.plot(np.arange(epochs),np.log(cost_history))  # Plot MSE on log scale
+        plt.xlabel("Epoch")
+        plt.ylabel("MSE")
+        plt.show()
+
+        print()
+        #print(W.eval())
+        #print()
+        # post training loss
+        print("Post training MSE: ", sess.run(loss_nalu, feed_dict={X: x_test, Y: y_test}))
+
+        print("Actual result: ", y_test[0:10])
+        print()
+        y_hat_nalu = sess.run(y_pred_nalu, feed_dict={X: x_test, Y: y_test})
+        print("Predicted result: ", y_hat_nalu[0:10] )
