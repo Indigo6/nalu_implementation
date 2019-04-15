@@ -118,15 +118,14 @@ print(x_train.shape)
 print(y_train.shape)
 
 # Generate a series of input number X1,X2 and X3 for testing
-x1 =  np.random.randint(0,1000, size= 200).astype(np.float32)
-x2 = np.random.randint(1, 500, size=200).astype(np.float32)
-x3 = np.random.randint(50, 150 , size=200).astype(np.float32)
+x1 =  np.random.randint(0, 1000, size=200).astype(np.float32)
+x2 = np.random.randint(1, 1000, size=200).astype(np.float32)
 
 x_test = np.column_stack((x1,x2,x3))
 
-y_test = (x1/4) + (x2/2) + x3**2
+y_test = x1/x2
 
-#y_test = x1 + x2 + x3
+#y_test = x1/x2
 
 print()
 print(x_test.shape)
@@ -134,7 +133,7 @@ print(y_test.shape)
 
 
 # Define the placeholder to feed the value at run time
-X = tf.placeholder(dtype=tf.float32, shape =[None , 3])    # Number of samples x Number of features (number of inputs to be added)
+X = tf.placeholder(dtype=tf.float32, shape =[None , 2])    # Number of samples x Number of features (number of inputs to be added)
 Y = tf.placeholder(dtype=tf.float32, shape=[None,])
 
 # define the network
